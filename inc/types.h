@@ -18,7 +18,7 @@ enum ValueType_;
 */
 typedef union LispValue_ 
 {
-	char			*atom;   /* string of alfanumeric characters */
+	char			*atom;   /* string of extended alfanumeric characters */
 	struct LispList_	*list;   /* enclosed by ( and ) */
 	int			integer; /* string of digits */
 	char			*string; /* string enclosed by " */

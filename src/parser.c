@@ -14,11 +14,7 @@ static size_t count_chars(char *str, char c);
 static LispList *interprete_tokens(char **tokens, unsigned int *index);
 static int is_an_int(char *str);
 
-/* 
-	return values:
-		0  -> everything went better than expected
-		!0 -> omg :/
-*/
+
 extern LispList* parse(char* source)
 {
 	char **tokens;
@@ -146,14 +142,12 @@ static size_t count_chars(char *str, char c)
 static char *handle_parentheses(char *source)
 {
 	size_t newlen = 0;
-	unsigned int i, j;
+	int i, j;
 	char *newstr;
-	char *current;
 
 	newlen += 2 * (count_chars(source, '(') + count_chars(source, ')'));
 	newlen += strlen(source);
 
-	/* TODO: alloc handling */
 	newstr = (char *)malloc(newlen * sizeof(char));
 	
 	for (i = 0, j = 0; source[i] != NULL; i++, j++)
@@ -175,8 +169,8 @@ static char **tokenize(char* source)
 {	
 	char *token;
 	char **tokens;
-	unsigned int tokcount = CHUNK;
-	unsigned int i = 0;
+	int tokcount = CHUNK;
+	int i = 0;
 	size_t len;
 
 
@@ -191,7 +185,7 @@ static char **tokenize(char* source)
 		/* handle strings !*/ /* TODO: \" handling*/
 		if (token[0] == '"') /* if token begins with " it must be a string */
 		{ 
-			for (token++; *token != '"'; token++) /* interate thorught characters until you find matching " */ 
+			for (token++; *token != '"'; token++) /* interate through characters until you find matching " */ 
 				if (*token == NULL) /* on your way changes all \0 characters set by strtok back to spaces */
 					*token = ' ';
 			*(token + 1) = ' ';
@@ -200,12 +194,9 @@ static char **tokenize(char* source)
 
 		if (i >= tokcount)
 		{
-			/* TODO: alloc handling */
 			tokcount += CHUNK;
 			tokens = (char **)realloc(tokens, tokcount * sizeof(char *));
 		}
-		/* TODO: no printf here : */
-		//printf("[%u] %s\n", i - 1, token);
 		token = strtok(NULL, DELIMITERS);
 	}
 	while (token != NULL);

@@ -127,7 +127,7 @@ static LispList *set_form(LispList *expr)
 	LispList *value = expr->tail;
 
 	if (value->tail->type != END_OF_LIST)
-		fprintf(stderr, "WARN -> 'set!' form contains aditional arguments (more than 3).");
+		fprintf(stderr, "WARN -> 'set!' form contains aditional arguments (more than 3).\n        additional arguments ignored\n");
 
 	if (atom->type != ATOM)
 	{
@@ -163,7 +163,7 @@ static LispList *if_form(LispList *expr)
 	LispList *negative = positive->tail; /* TODO: false is optional! */
 
 	if (negative->tail->type != END_OF_LIST)
-		fprintf(stderr, "WARN -> 'if' form contains aditional arguments (more than 3).");
+		fprintf(stderr, "WARN -> 'if' form contains additional arguments (more than 3).\n        additional arguments ignored\n");
 
 	result = (LispList *)malloc(sizeof(LispList));
 	result->tail = (LispList *)malloc(sizeof(LispList));
@@ -199,7 +199,8 @@ extern LispList *display(LispList *expr)
 	}
 
 	if (expr->tail->type != END_OF_LIST)
-		fprintf(stderr, "WARN -> Only one argument 'display' variant supported.\n");
+		display(expr->tail);
+		//fprintf(stderr, "WARN -> Only one argument 'display' variant supported.\n");
 
 	result = (LispList *)malloc(sizeof(LispList));
 	result->here.integer = 1;
@@ -257,96 +258,3 @@ static int to_int(LispList *expr)
 
 	return 0;
 }
-
-/* TODO: benchmark! */
-/*
-static int sum_i(LispList *expr)
-{
-	int acc = 0;
-
-	while (expr->type != END_OF_LIST)
-	{
-		switch(expr->type)
-		{
-		case INTEGER:
-			acc += expr->here.integer;
-			break;
-
-		case LIST:
-			acc += eval(expr->here.list);
-			break;
-		}
-
-		expr = expr->tail;
-	}
-
-	return acc;
-}
-
-static int sub_i(LispList *expr)
-{
-	int acc = expr->here.integer;
-	expr = expr->tail;
-
-	while (expr->type != END_OF_LIST)
-	{
-		switch(expr->type)
-		{
-		case INTEGER:
-			acc -= expr->here.integer;
-			break;
-
-		case LIST:
-			acc -= eval(expr->here.list);
-			break;
-		}
-
-		expr = expr->tail;
-	}
-
-	return acc;
-}
-
-static int mul_i(LispList *expr)
-{
-	int acc = 1;
-
-	while (expr->type != END_OF_LIST)
-	{
-		switch(expr->type)
-		{
-		case INTEGER:
-			acc *= expr->here.integer;
-			break;
-
-		case LIST:
-			acc *= eval(expr->here.list);
-			break;
-		}
-
-		expr = expr->tail;
-	}
-
-	return acc;
-}
-*/
-/* old recursive versions: */
-/*static int sum(LispList *list)
-{
-	if (list->type == END_OF_LIST)
-		return 0;
-	else if (list->type == LIST)
-		return eval(list->here.list) + sum(list->tail);
-	else if (list->type == INTEGER)
-		return list->here.integer + sum(list->tail);
-}*/
-
-/*static int mul(LispList *list)
-{
-	if (list->type == END_OF_LIST)
-		return 1;
-	else if (list->type == LIST)
-		return eval(list->here.list) * mul(list->tail);
-	else if (list->type == INTEGER)
-		return list->here.integer * mul(list->tail);
-}*/
