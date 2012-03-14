@@ -33,10 +33,10 @@ List of standard Scheme procedures required by R5RS
    (max x1 x2 ...)
    (min x1 x2 ...)
 
-   (+ z1 ...)		partially implemented in C, no tests
-   (* z1 ...)		partially implemented in C, no tests
-   (- z1 ...)		partially implemented in C, no tests
-   (/ z1 ...)		partially implemented in C, no tests
+   (+ z1 ...)		partially implemented in C, extensive tests
+   (* z1 ...)		partially implemented in C, extensive tests
+   (- z1 ...)		partially implemented in C, extensive tests
+   (/ z1 ...)		partially implemented in C, nonextensive tests (one argument case not tested)
 
    (abs x)
 

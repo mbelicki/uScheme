@@ -28,7 +28,8 @@ int assert_eval(char *s_expr, LispValue asserted_result)
 	}
 	else
 	{
-		printf("BAD : %s\n", s_expr);
+		printf("BAD : %s\n     returned: %d; expected: %d\n", 
+			s_expr, result->here.integer, asserted_result.integer);
 		return 0;
 	}
 }
@@ -41,8 +42,8 @@ int main(int argc, char **argv)
 
 	printf("\n--- 2. numeric functions ---\n\n");
 	
-	//result.integer = 5;
-	//passed += assert_eval("(+ 3 4 -2)", result); all++;
+	result.integer = 5;
+	passed += assert_eval("(+ 3 4 -2)", result); all++;
 	
 	result.integer = 7;
 	passed += assert_eval("(+ 3 4)", result); all++;
@@ -53,8 +54,8 @@ int main(int argc, char **argv)
 	result.integer = 0;
 	passed += assert_eval("(+)", result); all++;
 
-	//result.integer = -24;
-	//passed += assert_eval("(* 3 4 -2)", result); all++;
+	result.integer = -24;
+	passed += assert_eval("(* 3 4 -2)", result); all++;
 
 	result.integer = 12;
 	passed += assert_eval("(* 3 4)", result); all++;

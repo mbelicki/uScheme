@@ -120,6 +120,7 @@ static int is_a_digit(char c)
 static int is_an_int(char *str)
 {
 	char *current;
+	if (*str == '-' && is_a_digit(*(str + 1))) str+=2; /* first character might be - */
 	for (current = str; *current != NULL; current++)
 		if (!is_a_digit(*current))
 			return 0;
