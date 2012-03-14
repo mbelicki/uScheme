@@ -1,0 +1,85 @@
+List of standard Scheme procedures required by R5RS
+
+[this file is under construction]
+
+   Procedure name            Implementation
+                     (empty means not yet implemented)
+
+...
+
+2. Numbers
+
+   (number? obj)
+   (complex? obj)
+   (real? obj)
+   (rational? obj)
+   (integer? obj)
+
+   (exact? z)
+   (inexact? z)
+
+   (= z1 z2 z3 ...)
+   (< z1 z2 z3 ...)
+   (> z1 z2 z3 ...)
+   (<= z1 z2 z3 ...)
+   (>= z1 z2 z3 ...)
+   
+   (zero? z)
+   (positive? x)
+   (negative? x)
+   (odd? n)
+   (even? n) 
+
+   (max x1 x2 ...)
+   (min x1 x2 ...)
+
+   (+ z1 ...)		partially implemented in C, no tests
+   (* z1 ...)		partially implemented in C, no tests
+   (- z1 ...)		partially implemented in C, no tests
+   (/ z1 ...)		partially implemented in C, no tests
+
+   (abs x)
+
+   (quotient n1 n2)
+   (modulo n1 n2)	partially implemented in C, no tests
+   (remainder n1 n2)	partially implemented in C, no tests
+
+   (gdc n1 ...)
+   (lcm n1 ...)
+
+   (numerator q)
+   (denominator q)
+
+   (floor x)
+   (ceiling x)
+   (truncate x)
+   (round x)
+
+   (rationalize x y)
+
+   (exp z)
+   (log z)
+   (sin z)
+   (cos z)
+   (tan z)
+   (asin z)
+   (acos z)
+   (atan z)
+   (atan x y)
+
+   (sqrt z)
+   (expt z1 z2)
+
+   (make-rectangular x1 x2)
+   (make-polar x3 x4)
+   (real-part z)
+   (imag-part z)
+   (magnitude z)
+   (angle z)
+   
+   (exact->inexact z)
+   (inexact->exact z)
+   
+   (number->string z)
+   (number->string z radix) 
+...
