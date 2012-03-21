@@ -90,12 +90,19 @@ static LispList *eval_proc(LispList *func, LispList *args, Environment *env)
 	}
 			
 	LispList *result = eval(func->here.raw.procedure->expression, local_env);
-	free_env(local_env); 
+	free_env(local_env);
+	free(local_env);
 	return result;
 }
 
 static LispList *lambda_form(LispList *expr, Environment *env)
 {
+	if (expr->here.type != LIST)
+	{
+		fprintf(stderr, "ERRO -> Illegal first argument of `lambda'. Expected argument list.\n");
+		return NULL;
+	}
+	
 	LispList* result    = (LispList *)malloc(sizeof(LispList));
 	LispProcedure* proc = (LispProcedure *)malloc(sizeof(LispProcedure)); 
 	
@@ -115,14 +122,14 @@ static LispList *set_form(LispList *expr, Environment *env)
 	LispList *value = expr->tail;
 
 	if (value->tail->here.type != END_OF_LIST)
-		fprintf(stderr, "WARN -> 'set!' form contains aditional arguments (more than 3).\n        additional arguments ignored\n");
+		fprintf(stderr, "WARN -> 'set!' form contains aditional arguments (more than 2).\n        additional arguments ignored\n");
 
 	if (atom->here.type != ATOM)
 	{
 		fprintf(stderr, "ERRO -> First argument must be of atom type.");
 		return NULL;
 	}
-
+	
 	set_var(env, atom->here.raw.atom, eval(value, env)); /* TODO: check if not NULL, NULL means no setting ;/ */
 
 	return value;
@@ -148,10 +155,10 @@ static LispList *if_form(LispList *expr, Environment *env)
 	/* TODO: check if not too few arguments */
 	LispList *pred = expr;
 	LispList *positive = pred->tail;
-	LispList *negative = positive->tail; /* TODO: false is optional! */
+	LispList *negative = positive->tail;
 
-	if (negative->tail->here.type != END_OF_LIST)
-		fprintf(stderr, "WARN -> 'if' form contains additional arguments (more than 3).\n        additional arguments ignored\n");
+	//if (negative->tail->here.type != END_OF_LIST)
+	//	fprintf(stderr, "WARN -> 'if' form contains additional arguments (more than 3).\n        additional arguments ignored\n");
 
 	result = (LispList *)malloc(sizeof(LispList));
 	result->tail = (LispList *)malloc(sizeof(LispList));
@@ -160,12 +167,18 @@ static LispList *if_form(LispList *expr, Environment *env)
 	if (to_bool(pred, env))
 	{
 		result->here = positive->here;
-		//result->type = positive->type;
 	}
 	else
 	{
-		result->here = negative->here;
-		//result->type = negative->type;
+		if (negative == NULL || negative->here.type == END_OF_LIST)
+		{
+			result->here.type = BOOLEAN;
+			result->here.raw.boolean = 0;
+		}
+		else
+		{
+			result->here = negative->here;
+		}
 	}
 
 	return result;

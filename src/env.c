@@ -20,7 +20,6 @@ extern int init_env(Environment *env, size_t initial_size)
 extern int free_env(Environment *env)
 {
 	free(env->symbols);
-	free(env);
 }
 
 extern int set_var(Environment *env, char *name, TypedValue *value)
