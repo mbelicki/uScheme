@@ -9,14 +9,21 @@
 
 /* definitons */
 
-extern int init_env(Environment *env)
+extern int init_env(Environment *env, size_t initial_size)
 {
 	env->used_size = 0;
-	env->size  = CHUNK;
-	env->symbols = (EnvSymbol *)malloc(CHUNK * sizeof(EnvSymbol));
+	env->size      = initial_size > 0 ? initial_size : CHUNK;
+	env->symbols   = (EnvSymbol *)malloc(env->size * sizeof(EnvSymbol));
+	env->parent    = NULL;
 }
 
-extern int set_var(Environment *env, char *name, LispList *value)
+extern int free_env(Environment *env)
+{
+	free(env->symbols);
+	free(env);
+}
+
+extern int set_var(Environment *env, char *name, TypedValue *value)
 {
 	int i;
 	
@@ -45,12 +52,12 @@ extern int set_var(Environment *env, char *name, LispList *value)
 	return (int)(value);
 }
 
-extern LispList *get_var(Environment *env, char *name)
+extern TypedValue *get_var(Environment *env, char *name)
 {
 	int i;
 	for (i = 0; i < env->used_size; i++)
 		if (strcmp(name, env->symbols[i].name) == 0)
 			return env->symbols[i].value;
-	/* value not found, sorry */
-	return NULL;
+	/* value not found, try in higher scope */
+	return env->parent == NULL ? NULL : get_var(env->parent, name);
 }

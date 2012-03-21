@@ -74,18 +74,24 @@ extern LispList *eval(LispList *root, Environment *env)
 	else return root;
 }
 
-static LispList *eval_proc(LispList *procedure, LispList *args, Environment *env)
+static LispList *eval_proc(LispList *func, LispList *args, Environment *env)
 {
-	LispList *formals = procedure->here.raw.procedure->formals;
+	LispList *formals = func->here.raw.procedure->formals;
+
+	Environment *local_env = (Environment *)malloc(sizeof(Environment));
+	init_env(local_env, 8);
+	local_env->parent = env;
 
 	while (formals->here.type != END_OF_LIST)
 	{
-		set_var(env, formals->here.raw.atom, args);
+		set_var(local_env, formals->here.raw.atom, args);
 		formals = formals->tail;
 		args = args->tail;
 	}
 			
-	return eval(procedure->here.raw.procedure->expression, env); 
+	LispList *result = eval(func->here.raw.procedure->expression, local_env);
+	free_env(local_env); 
+	return result;
 }
 
 static LispList *lambda_form(LispList *expr, Environment *env)

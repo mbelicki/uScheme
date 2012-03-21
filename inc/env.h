@@ -5,7 +5,7 @@
 typedef struct EnvSymbol_
 {
 	char *name;
-	LispList *value;
+	TypedValue *value;
 	char flags;
 }
 EnvSymbol;
@@ -14,17 +14,18 @@ EnvSymbol;
 
 typedef struct Environment_
 {
-	EnvSymbol *symbols;
-	unsigned int used_size;
-	unsigned int size;
+	EnvSymbol           *symbols;
+	struct Environment_ *parent;
+	unsigned int         used_size;
+	unsigned int         size;
 }
 Environment;
 
 /* declarations */
 
-extern int init_env(Environment *env);
+extern int init_env(Environment *env, size_t initial_size);
+extern int free_env(Environment *env);
 
-extern int set_var(Environment *env, char *name, LispList *value);
-
-extern LispList *get_var(Environment *env, char *name);
+extern int set_var(Environment *env, char *name, TypedValue *value);
+extern TypedValue *get_var(Environment *env, char *name);
 
