@@ -2,11 +2,19 @@
 #include "types.h"
 
 /* types */
+typedef struct EnvSymbol_
+{
+	char *name;
+	LispList *value;
+	char flags;
+}
+EnvSymbol;
+
+#define ENVVAR_MUTABLE 0x01
 
 typedef struct Environment_
 {
-	char **atoms;
-	LispList **values;
+	EnvSymbol *symbols;
 	unsigned int used_size;
 	unsigned int size;
 }

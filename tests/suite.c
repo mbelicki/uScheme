@@ -9,7 +9,7 @@
 static char code[512];
 
 /* returns 1 if passed 0 otherwise */
-int assert_eval(char *s_expr, LispValue asserted_result)
+int assert_eval(char *s_expr, RawValue asserted_result)
 {
 	LispList *prog;
 	LispList *result;
@@ -22,7 +22,7 @@ int assert_eval(char *s_expr, LispValue asserted_result)
 
 	/* TODO: comparing values might be not enough for atoms, strings and lists,
 	 * all of which happen to be represented by pointers... */
-	if (asserted_result.integer == result->here.integer)
+	if (asserted_result.integer == result->here.raw.integer)
 	{
 		printf("OK  : %s\n", s_expr);
 		return 1;
@@ -30,7 +30,7 @@ int assert_eval(char *s_expr, LispValue asserted_result)
 	else
 	{
 		printf("BAD : %s\n      returned: %d; expected: %d\n", 
-			s_expr, result->here.integer, asserted_result.integer);
+			s_expr, result->here.raw.integer, asserted_result.integer);
 		return 0;
 	}
 }
@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 {
 	int passed = 0;
 	int all    = 0;
-	LispValue result;
+	RawValue result;
 
 	printf("\n--- 2. numeric functions ---\n\n");
 	

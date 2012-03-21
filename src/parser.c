@@ -53,13 +53,13 @@ static LispList *interprete_tokens(char **tokens, unsigned int *index)
 
 			expr = interprete_tokens(tokens, index);
 			
-			top->here.list = expr;
-			top->type = LIST;
+			top->here.raw.list = expr;
+			top->here.type = LIST;
 		}
 		else if (is_an_int(tokens[*index])) /* number */
 		{
-			top->here.integer = atoi(tokens[*index]);
-			top->type = INTEGER;
+			top->here.raw.integer = atoi(tokens[*index]);
+			top->here.type = INTEGER;
 			(*index)++;
 		}
 		else if (tokens[*index][0] == '"') /* string */
@@ -72,20 +72,20 @@ static LispList *interprete_tokens(char **tokens, unsigned int *index)
 			tokens[*index][stlen] = NULL;
 			strcpy(string, tokens[*index] + 1);
 
-			top->here.string = string;
-			top->type = STRING;
+			top->here.raw.string = string;
+			top->here.type = STRING;
 			(*index)++;
 		}
 		else if (strcmp(tokens[*index], "#t") == 0) /* true */
 		{
-			top->here.boolean = 1;
-			top->type = BOOLEAN;
+			top->here.raw.boolean = 1;
+			top->here.type = BOOLEAN;
 			(*index)++;
 		}
 		else if (strcmp(tokens[*index], "#f") == 0) /* false */
 		{
-			top->here.boolean = 0;
-			top->type = BOOLEAN;
+			top->here.raw.boolean = 0;
+			top->here.type = BOOLEAN;
 			(*index)++;
 		}
 		else /* it must be an atom then! */
@@ -97,14 +97,14 @@ static LispList *interprete_tokens(char **tokens, unsigned int *index)
 			atom = (char *)malloc(atlen * sizeof(char));
 			strcpy(atom, tokens[*index]);
 
-			top->here.atom = atom;
-			top->type = ATOM;
+			top->here.raw.atom = atom;
+			top->here.type = ATOM;
 			(*index)++;
 		}
 
 		top->tail = (LispList *)malloc(sizeof(LispList));
 		top = top->tail;
-		top->type = END_OF_LIST;
+		top->here.type = END_OF_LIST;
 		top->tail = NULL;
 	}
 	(*index)++;

@@ -3,7 +3,8 @@
 #pragma once
 
 /* forward declarations : */
-union LispValue_;
+union RawValue_;
+struct TypedValue_;
 struct LispProcedure_;
 struct LispList_;
 
@@ -13,37 +14,34 @@ typedef enum ValueType_
 }
 ValueType;
 
-/*
-	either :
-		atom
-		list
-		dottedlist
-		number
-		string
-		boolean
-*/
-typedef union LispValue_ 
+typedef union RawValue_ 
 {
-	char			*atom;   /* string of extended alfanumeric characters */
-	struct LispList_	*list;   /* enclosed by ( and ) */
-	int			integer; /* string of digits */
-	char			*string; /* string enclosed by " */
-	int			boolean; /* #t or #f */
-	struct LispProcedure_	*procedure;
+	char                  *atom;   /* string of extended alfanumeric characters */
+	struct LispList_      *list;   /* enclosed by ( and ) */
+	int                    integer; /* string of digits */
+	char                  *string; /* string enclosed by " */
+	int                    boolean; /* #t or #f */
+	struct LispProcedure_ *procedure;
 } 
-LispValue;
+RawValue;
 
 typedef struct LispProcedure_
 {
-	struct LispList_	*formals;
-	struct LispList_	*expression;
+	struct LispList_ *formals;
+	struct LispList_ *expression;
 }
 LispProcedure;
 
+typedef struct TypedValue_
+{
+	union RawValue_ raw;
+	enum ValueType_	type;
+}
+TypedValue;
+
 typedef struct LispList_
 {
-	union LispValue_ 	here;
-	enum ValueType_		type;
-	struct LispList_  	*tail;
+	struct TypedValue_  here;
+	struct LispList_   *tail;
 }
 LispList;
