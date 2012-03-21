@@ -13,14 +13,15 @@ int assert_eval(char *s_expr, LispValue asserted_result)
 {
 	LispList *prog;
 	LispList *result;
+	Environment env;
 	
 	strcpy(code, s_expr);
 	
 	prog = parse(code);
-	result = eval(prog);
+	result = eval(prog, &env);
 
 	/* TODO: comparing values might be not enough for atoms, strings and lists,
-	 * which happen to be represented by pointers... */
+	 * all of which happen to be represented by pointers... */
 	if (asserted_result.integer == result->here.integer)
 	{
 		printf("OK  : %s\n", s_expr);
@@ -28,7 +29,7 @@ int assert_eval(char *s_expr, LispValue asserted_result)
 	}
 	else
 	{
-		printf("BAD : %s\n     returned: %d; expected: %d\n", 
+		printf("BAD : %s\n      returned: %d; expected: %d\n", 
 			s_expr, result->here.integer, asserted_result.integer);
 		return 0;
 	}
@@ -78,6 +79,9 @@ int main(int argc, char **argv)
 	result.integer = 4;
 	passed += assert_eval("(/ 8 2)", result); all++;
 	
+	result.integer = 0;
+	passed += assert_eval("(/ 2)", result); all++;
+
 	result.integer = 2;
 	passed += assert_eval("(/ 8 2 2)", result); all++;
 	

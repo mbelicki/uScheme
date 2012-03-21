@@ -5,6 +5,34 @@ List of standard Scheme procedures required by R5RS
    Procedure name            Implementation
                      (empty means not yet implemented)
 
+0. Forms
+ a) fundamental forms: 
+   define, 
+   lambda, 
+   if, 
+   quote, 
+   unquote, 
+   unquote-splicing, 
+   quasiquote, 
+   define-syntax, 
+   let-syntax, 
+   letrec-syntax, 
+   syntax-rules, 
+   set!
+
+ b) library forms: 
+   do, 
+   let, 
+   let*, 
+   letrec, 
+   cond, 
+   case, 
+   and, 
+   or, 
+   begin, 
+   named let, 
+   delay
+
 ...
 
 2. Numbers

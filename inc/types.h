@@ -4,8 +4,14 @@
 
 /* forward declarations : */
 union LispValue_;
+struct LispProcedure_;
 struct LispList_;
-enum ValueType_;
+
+typedef enum ValueType_
+{
+	ATOM, LIST, INTEGER, STRING, BOOLEAN, PROCEDURE, END_OF_LIST
+}
+ValueType;
 
 /*
 	either :
@@ -22,15 +28,17 @@ typedef union LispValue_
 	struct LispList_	*list;   /* enclosed by ( and ) */
 	int			integer; /* string of digits */
 	char			*string; /* string enclosed by " */
-	int			boolean; /* #t or #f */	
+	int			boolean; /* #t or #f */
+	struct LispProcedure_	*procedure;
 } 
 LispValue;
 
-typedef enum ValueType_
+typedef struct LispProcedure_
 {
-	ATOM, LIST, INTEGER, STRING, BOOLEAN, END_OF_LIST
+	struct LispList_	*formals;
+	struct LispList_	*expression;
 }
-ValueType;
+LispProcedure;
 
 typedef struct LispList_
 {

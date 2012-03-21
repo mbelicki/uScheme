@@ -22,106 +22,55 @@ int intmul(int a, int b) {return a * b;}
 int intdiv(int a, int b) {return a / b;}
 int intmod(int a, int b) {return a % b;}
 
-static int to_int(LispList *expr);
-static int to_bool(LispList *expr);
+static int to_int(LispList *expr, Environment *env);
+static int to_bool(LispList *expr, Environment *env);
 
-static LispList *reduce_int(LispList *expr, int base, int (*func)(int, int));
+static LispList *reduce_int(LispList *expr, int base, int (*func)(int, int), Environment *env);
 
-static LispList *if_form(LispList *expr);
-static LispList *set_form(LispList *expr);
+static LispList *if_form(LispList *expr, Environment *env);
+static LispList *set_form(LispList *expr, Environment *env);
 
-static LispList *begin_form(LispList *expr);
+static LispList *begin_form(LispList *expr, Environment *env);
 
-/* exec enviorment : */
-
-static int set_var(char *name, LispList *value);
-static LispList *get_var(char *name);
-
-static unsigned long env_used_size;
-static unsigned long env_size;
-
-static char **env_atoms;
-static LispList **env_values;
+static LispList *lambda_form(LispList *expr, Environment *env);
 
 /* definitions : */
-
-static int set_var(char *name, LispList *value)
-{
-	int i;
-	
-	/* if evn not empty search for name : */
-	for (i = 0; i < env_used_size; i++)
-		if (strcmp(name, env_atoms[i]) == 0)
-			return (int)(env_values[i] = value); /* if I could I would make it even more compact :(  */
-	
-	/* no name found : */
-
-	/* get more memmory if we are running out of free space : */
-	if (env_size <= env_used_size)
-	{
-		env_size += CHUNK; /* TODO: hey, what about some allocation result handling? */
-		env_atoms = (char **)realloc(env_atoms, env_size * sizeof(char *));
-		env_values = (LispList **)realloc(env_values, env_size * sizeof(LispList *));
-	}
-
-	/* set new variable : */
-	i = strlen(name);
-	env_atoms[env_used_size] = (char *)malloc(i * sizeof(char));
-	strcpy(env_atoms[env_used_size], name);
-	env_values[env_used_size] = value; /* TODO: consider realloctaion */
-
-	env_used_size++;
-
-	return (int)(value);
-}
-
-static LispList *get_var(char *name)
-{
-	int i;
-	/* if evn not empty search for name : */
-	for (i = 0; i < env_used_size; i++)
-		if (strcmp(name, env_atoms[i]) == 0)
-			return env_values[i];
-	/* value not found, sorry */
-	return NULL;
-}
-
-extern LispList *eval(LispList *root)
+extern LispList *eval(LispList *root, Environment *env)
 {
 	if (root->type == LIST)
 	{
-		LispList *evaled = eval(root->here.list);
+		LispList *evaled = eval(root->here.list, env);
 		evaled->tail = root->tail;
 		root = evaled;
 	}
 	if (root->type == ATOM)
 	{
 		if      (strcmp(root->here.atom, "+") == 0)
-			return reduce_int(root->tail, 0, intadd);
+			return reduce_int(root->tail, 0, intadd, env);
 		else if (strcmp(root->here.atom, "-") == 0)
-			return reduce_int(root->tail->tail, root->tail->here.integer, intsub);
+			return reduce_int(root->tail->tail, root->tail->here.integer, intsub, env);
 		else if (strcmp(root->here.atom, "*") == 0)
-			return reduce_int(root->tail, 1, intmul);
+			return reduce_int(root->tail, 1, intmul, env);
 		else if (strcmp(root->here.atom, "/") == 0)
-			return reduce_int(root->tail->tail, root->tail->here.integer, intdiv);
+			return reduce_int(root->tail->tail, root->tail->here.integer, intdiv, env);
 		else if (strcmp(root->here.atom, "modulo") == 0)
-			return reduce_int(root->tail->tail, root->tail->here.integer, intmod);
+			return reduce_int(root->tail->tail, root->tail->here.integer, intmod, env);
 		
 		else if (strcmp(root->here.atom, "if") == 0)
-			return if_form(root->tail);
+			return if_form(root->tail, env);
 		else if (strcmp(root->here.atom, "set!") == 0)
-			return set_form(root->tail);
+			return set_form(root->tail, env);
 		else if (strcmp(root->here.atom, "begin") == 0)
-			return begin_form(root->tail);
+			return begin_form(root->tail, env);
 		else if (strcmp(root->here.atom, "display") == 0)
-			return display(root->tail);
+			return display(root->tail, env);
 		else
-			return get_var(root->here.atom);
+			return get_var(env, root->here.atom);
 	}
 	else return root;
 }
 
-static LispList *set_form(LispList *expr)
+static LispList *set_form(LispList *expr, Environment *env)
 {
 	LispList *atom = expr; /* TODO: check count! */
 	LispList *value = expr->tail;
@@ -135,25 +84,25 @@ static LispList *set_form(LispList *expr)
 		return NULL;
 	}
 
-	set_var(atom->here.atom, eval(value)); /* TODO: check if not NULL, NULL means no setting ;/ */
+	set_var(env, atom->here.atom, eval(value, env)); /* TODO: check if not NULL, NULL means no setting ;/ */
 
 	return value;
 }
 
-static LispList *begin_form(LispList *expr)
+static LispList *begin_form(LispList *expr, Environment *env)
 {
 	LispList *result;
 
 	while (expr->type != END_OF_LIST)
 	{
-		result = eval(expr);
+		result = eval(expr, env);
 		expr = expr->tail;
 	}
 
 	return result;
 }
 
-static LispList *if_form(LispList *expr)
+static LispList *if_form(LispList *expr, Environment *env)
 {
 	LispList *result;
 	
@@ -169,7 +118,7 @@ static LispList *if_form(LispList *expr)
 	result->tail = (LispList *)malloc(sizeof(LispList));
 	result->tail->type = END_OF_LIST;
 
-	if (to_bool(pred))
+	if (to_bool(pred, env))
 	{
 		result->here = positive->here;
 		result->type = positive->type;
@@ -183,23 +132,23 @@ static LispList *if_form(LispList *expr)
 	return result;
 }
 
-extern LispList *display(LispList *expr)
+extern LispList *display(LispList *expr, Environment *env)
 {
 	/* TODO: NULL handling*/
 	LispList *result;
 	
 	switch(expr->type)
 	{
-	case ATOM:			//fprintf(stderr, "ERRO -> Sorry, varialbe: %s not found :(.\n", expr->here.atom); break;
-	case LIST:			display(eval(expr)); break;
-	case INTEGER:		printf("%d\n", expr->here.integer); break;
-	case STRING:		printf("%s\n", expr->here.string); break;
-	case BOOLEAN:		expr->here.boolean ? printf("#t\n") : printf("#f\n"); break;
-	case END_OF_LIST:	fprintf(stderr, "ERRO -> 'display' argument missing!\n"); break;
+		case ATOM:        //fprintf(stderr, "ERRO -> Sorry, varialbe: %s not found :(.\n", expr->here.atom); break;
+		case LIST:        display(eval(expr, env), env); break;
+		case INTEGER:     printf("%d\n", expr->here.integer); break;
+		case STRING:      printf("%s\n", expr->here.string); break;
+		case BOOLEAN:     expr->here.boolean ? printf("#t\n") : printf("#f\n"); break;
+		case END_OF_LIST: fprintf(stderr, "ERRO -> 'display' argument missing!\n"); break;
 	}
 
 	if (expr->tail->type != END_OF_LIST)
-		display(expr->tail);
+		display(expr->tail, env);
 		//fprintf(stderr, "WARN -> Only one argument 'display' variant supported.\n");
 
 	result = (LispList *)malloc(sizeof(LispList));
@@ -211,14 +160,14 @@ extern LispList *display(LispList *expr)
 	return result;
 }
 
-static LispList *reduce_int(LispList *expr, int base, int (*func)(int, int))
+static LispList *reduce_int(LispList *expr, int base, int (*func)(int, int), Environment *env)
 {
 	int acc = base;
 	LispList *result;
 
 	while (expr->type != END_OF_LIST)
 	{
-		int next = to_int(expr);
+		int next = to_int(expr, env);
 		acc = func(acc, next);
 		expr = expr->tail;
 	}
@@ -232,29 +181,30 @@ static LispList *reduce_int(LispList *expr, int base, int (*func)(int, int))
 	return result;
 }
 
-static int to_bool(LispList *expr)
+static int to_bool(LispList *expr, Environment *env)
 {
 	switch (expr->type)
 	{
-	case INTEGER: /* fall thorugh */
-	case BOOLEAN: return expr->here.boolean ? 1 : 0;
-	case ATOM:
-	case LIST:	  return to_bool(eval(expr));
+		case INTEGER: /* fall thorugh */
+		case BOOLEAN: return expr->here.boolean ? 1 : 0;
+		case ATOM:
+		case LIST:    return to_bool(eval(expr, expr), expr);
 	}
 
 	return 0;
 }
 
-static int to_int(LispList *expr)
+static int to_int(LispList *expr, Environment *env)
 {
+	/* TODO: check complience with R5RS */
 	switch (expr->type)
 	{
-	case INTEGER: return expr->here.integer;
-	case STRING:  return atoi(expr->here.string);
-	case ATOM:
-	case LIST:	  return to_int(eval(expr));
-	case BOOLEAN: return expr->here.boolean ? 1 : 0; /* chek what R5RS says */
+		case INTEGER: return expr->here.integer;
+		case STRING:  return atoi(expr->here.string);
+		case ATOM:
+		case LIST:    return to_int(eval(expr, env), env);
+		case BOOLEAN: return expr->here.boolean ? 1 : 0; 
 	}
-
 	return 0;
 }
+
