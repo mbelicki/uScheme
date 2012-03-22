@@ -27,12 +27,12 @@ int assert_eval(char *s_expr, RawValue asserted_result)
 	 * all of which happen to be represented by pointers... */
 	if (asserted_result.integer == result->here.raw.integer)
 	{
-		printf("OK  : %s\n", s_expr);
+		printf("\033[01;32m OK \033[0m  | %s\n", s_expr);
 		return 1;
 	}
 	else
 	{
-		printf("BAD : %s\n      returned: %d; expected: %d\n", 
+		printf("\033[01;31m BAD \033[0m | %s\n      ^ returned: %d; expected: %d\n", 
 			s_expr, result->here.raw.integer, asserted_result.integer);
 		return 0;
 	}

@@ -4,6 +4,7 @@
 #include <assert.h>
 
 #include "eval.h"
+#include "error.h"
 
 #define CHUNK 16
 
@@ -97,17 +98,39 @@ static LispList *eval_proc(LispList *func, LispList *args, Environment *env)
 
 static LispList *lambda_form(LispList *expr, Environment *env)
 {
-	if (expr->here.type != LIST)
+	LispList *formals;
+	LispList *expression;
+	/* first argument presence and type: */
+	formals = expr;
+	if (formals == NULL || formals->here.type == END_OF_LIST)
 	{
-		fprintf(stderr, "ERRO -> Illegal first argument of `lambda'. Expected argument list.\n");
+		err_throw(ILLEGAL_ARGS_COUNT, 
+			  "Mising first argument of `lambda'.", 
+			  "First argument of `lambda' is mandatory, expected list of atoms.");
 		return NULL;
 	}
-	
+	if (formals->here.type != LIST)
+	{
+		err_throw(ILLEGAL_ARGS_TYPE, 
+			  "Illegal first argument of `lambda'.", 
+			  "Expected list of atoms.");
+		return NULL;
+	}
+	/* presence of second argument */
+	expression = formals->tail;
+	if (expression == NULL || expression->here.type == END_OF_LIST)
+	{
+		err_throw(ILLEGAL_ARGS_COUNT, 
+			  "Mising second argument of `lambda'.", 
+			  "Second argument of `lambda' is mandatory.");
+		return NULL;
+	}
+	/* allocate result */	
 	LispList* result    = (LispList *)malloc(sizeof(LispList));
 	LispProcedure* proc = (LispProcedure *)malloc(sizeof(LispProcedure)); 
 	
 	result->here.type = PROCEDURE;
-	result->tail = NULL; /* are you sure? */
+	result->tail = NULL;
 	result->here.raw.procedure = proc;
 	
 	proc->formals = expr->here.raw.list;
@@ -118,20 +141,44 @@ static LispList *lambda_form(LispList *expr, Environment *env)
 
 static LispList *set_form(LispList *expr, Environment *env)
 {
-	LispList *atom = expr; /* TODO: check count! */
-	LispList *value = expr->tail;
-
-	if (value->tail->here.type != END_OF_LIST)
-		fprintf(stderr, "WARN -> 'set!' form contains aditional arguments (more than 2).\n        additional arguments ignored\n");
-
-	if (atom->here.type != ATOM)
+	LispList *atom;
+	LispList *value;
+	/* check arguments count, and type of first argument */
+	atom = expr;
+	if (atom == NULL || atom->here.type == END_OF_LIST)
 	{
-		fprintf(stderr, "ERRO -> First argument must be of atom type.");
+		err_throw(ILLEGAL_ARGS_COUNT, 
+			  "Mising first argument of `set!'.", 
+			  "First argument of `set!' is mandatory, expected atom.");
 		return NULL;
 	}
-	
-	set_var(env, atom->here.raw.atom, eval(value, env)); /* TODO: check if not NULL, NULL means no setting ;/ */
+	if (atom->here.type != ATOM)
+	{
+		err_throw(ILLEGAL_ARGS_TYPE, 
+			  "Illegal first argument of `set!'.", 
+			  "Expected atom.");
+		return NULL;
+	}
+	/* check presence of second argument */
+	value = atom->tail;
+	if (value == NULL || value->here.type == END_OF_LIST)
+	{
+		err_throw(ILLEGAL_ARGS_COUNT, 
+			  "Mising second argument of `set!'.", 
+			  "second argument of `set!' is mandatory.");
+		return NULL;
 
+	}
+	/* are there any bonus arguments? */
+	if (value->tail != NULL || value->tail->here.type != END_OF_LIST)
+	{
+		warn_throw("`set!' form contains additional arguments.", 
+		 	   "Arguments following second argument will be ignored.");
+	}
+	value = eval(value, env);
+	if (err_try())
+		return NULL;	
+	set_var(env, atom->here.raw.atom, value);
 	return value;
 }
 
@@ -139,38 +186,65 @@ static LispList *begin_form(LispList *expr, Environment *env)
 {
 	LispList *result;
 
-	while (expr->here.type != END_OF_LIST)
+	while (expr != NULL && expr->here.type != END_OF_LIST)
 	{
 		result = eval(expr, env);
+		if (err_try())
+			return NULL;
 		expr = expr->tail;
 	}
-
 	return result;
 }
 
 static LispList *if_form(LispList *expr, Environment *env)
 {
 	LispList *result;
-	
-	/* TODO: check if not too few arguments */
-	LispList *pred = expr;
-	LispList *positive = pred->tail;
-	LispList *negative = positive->tail;
-
-	//if (negative->tail->here.type != END_OF_LIST)
-	//	fprintf(stderr, "WARN -> 'if' form contains additional arguments (more than 3).\n        additional arguments ignored\n");
-
+	LispList *pred;
+	LispList *positive;
+	LispList *negative;
+	int pred_val = 0;
+	/* check arguments count, first argument: */
+	pred = expr;
+	if (pred == NULL || pred->here.type == END_OF_LIST)
+	{
+		err_throw(ILLEGAL_ARGS_COUNT, 
+			  "Missing first argument of `if'", 
+			  "First argument of `if' is mandatory");
+		return NULL;
+	}
+	/* second argument: */
+	positive = pred->tail;
+	if (positive == NULL || positive->here.type == END_OF_LIST)
+	{
+		err_throw(ILLEGAL_ARGS_COUNT, 
+			  "Missing second argument of `if'", 
+			  "Second argument of `if' is mandatory");
+		return NULL;
+	}
+	/* third argument: */
+	negative = positive->tail;
+	if (negative != NULL && negative->here.type == END_OF_LIST)
+		negative = NULL;
+	/* check for aditional arguments */
+	if (negative != NULL && negative->tail->here.type != END_OF_LIST)
+		warn_throw("`if' form has additional arguments", 
+			   "Arguments following third argument will be ignored.");
+	/* evaluate predicate */
+	pred_val = to_bool(pred, env);
+	if (err_try())
+		return NULL;
+	/* allocate result */
 	result = (LispList *)malloc(sizeof(LispList));
 	result->tail = (LispList *)malloc(sizeof(LispList));
 	result->tail->here.type = END_OF_LIST;
-
-	if (to_bool(pred, env))
+	
+	if ( pred_val )
 	{
 		result->here = positive->here;
 	}
 	else
 	{
-		if (negative == NULL || negative->here.type == END_OF_LIST)
+		if (negative == NULL)
 		{
 			result->here.type = BOOLEAN;
 			result->here.raw.boolean = 0;
@@ -180,29 +254,47 @@ static LispList *if_form(LispList *expr, Environment *env)
 			result->here = negative->here;
 		}
 	}
-
 	return result;
 }
 
 extern LispList *display(LispList *expr, Environment *env)
 {
-	/* TODO: NULL handling*/
 	LispList *result;
-	
+
 	switch(expr->here.type)
 	{
-		case ATOM:        printf("%s\n", expr->here.raw.atom); break;
-		case LIST:        display(eval(expr, env), env); break;
-		case INTEGER:     printf("%d\n", expr->here.raw.integer); break;
-		case STRING:      printf("%s\n", expr->here.raw.string); break;
-		case BOOLEAN:     expr->here.raw.boolean ? printf("#t\n") : printf("#f\n"); break;
-		case PROCEDURE:   printf("value is a procedure\n");break;
-		case END_OF_LIST: fprintf(stderr, "ERRO -> 'display' argument missing!\n"); break;
+		case ATOM:
+		case LIST:        
+			display(eval(expr, env), env); 
+			break;
+		case INTEGER:     
+			printf("%d\n", expr->here.raw.integer); 
+			break;
+		case STRING:      
+			printf("%s\n", expr->here.raw.string); 
+			break;
+		case BOOLEAN:     
+			expr->here.raw.boolean ? printf("#t\n") : printf("#f\n"); 
+			break;
+		case PROCEDURE:   
+			printf("value is a procedure\n");
+			break;
+		case END_OF_LIST: 
+			err_throw(ILLEGAL_ARGS_COUNT, 
+			          "Missing arguments of `display'.", 
+				  "Expected at least one argument.");
+			break;
 	}
-
+	/* check if there was error in any of evaluation above */
+	if (err_try())
+		return NULL;
+	/* continue checking if there was no error */
 	if (expr->tail->here.type != END_OF_LIST)
 		display(expr->tail, env);
-
+	/* check if there was error in recursive display */
+	if (err_try())
+		return NULL;
+	/* return 1 if display succeeded */
 	result = (LispList *)malloc(sizeof(LispList));
 	result->here.raw.integer = 1;
 	result->here.type = INTEGER;
@@ -220,10 +312,12 @@ static LispList *reduce_int(LispList *expr, int base, int (*func)(int, int), Env
 	while (expr->here.type != END_OF_LIST)
 	{
 		int next = to_int(expr, env);
+		/* exit if there was an error during conversion */
+		if (err_try())
+			return NULL;
 		acc = func(acc, next);
 		expr = expr->tail;
 	}
-
 	result = (LispList *)malloc(sizeof(LispList));
 	result->here.raw.integer = acc;
 	result->here.type = INTEGER;
@@ -235,28 +329,43 @@ static LispList *reduce_int(LispList *expr, int base, int (*func)(int, int), Env
 
 static int to_bool(LispList *expr, Environment *env)
 {
+	LispList *temp;
 	/* TODO: check complience with R5RS */
 	switch (expr->here.type)
 	{
-		case INTEGER: /* fall thorugh */
-		case BOOLEAN: return expr->here.raw.boolean ? 1 : 0;
+		case INTEGER:
+		case BOOLEAN: 
+			return expr->here.raw.boolean ? 1 : 0;
 		case ATOM:
-		case LIST:    return to_bool(eval(expr, env), env);
+		case LIST:    
+			temp = eval(expr, env);
+			if (err_try())
+				return 0;
+			return to_bool(temp, env);
+		default:
+			return 1;
 	}
-
-	return 1;
 }
 
 static int to_int(LispList *expr, Environment *env)
 {
+	LispList *temp;
 	switch (expr->here.type)
 	{
-		case INTEGER: return expr->here.raw.integer;
-		case STRING:  return atoi(expr->here.raw.string);
+		case BOOLEAN:
+			return expr->here.raw.boolean ? 1 : 0; 
+		case INTEGER: 
+			return expr->here.raw.integer;
+		case STRING:  
+			return atoi(expr->here.raw.string);
 		case ATOM:
-		case LIST:    return to_int(eval(expr, env), env);
-		case BOOLEAN: return expr->here.raw.boolean ? 1 : 0; 
+		case LIST:    
+			temp = eval(expr, env);
+			if (err_try())
+				return 0;
+			return to_int(temp, env);
+		default:
+			return 0;
 	}
-	return 0;
 }
 
