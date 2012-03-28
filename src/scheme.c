@@ -18,7 +18,7 @@ int main(int argc, char **argv)
 
 	init_env(&env, 0);
 	
-	while (strcmp(code, ":q") != 0)
+	while (strcmp(code, ":q\n") != 0)
 	{
 		prog = parse(code);
 		result = eval(prog, &env);

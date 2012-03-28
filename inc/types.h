@@ -1,5 +1,4 @@
 /* types.h */
-
 #pragma once
 
 /* forward declarations : */

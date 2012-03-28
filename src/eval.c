@@ -85,6 +85,7 @@ extern LispList *eval(LispList *root, Environment *env)
 
 static LispList *eval_proc(LispList *func, LispList *args, Environment *env)
 {
+	LispList *result;
 	LispList *formals = func->here.raw.procedure->formals;
 
 	Environment *local_env = (Environment *)malloc(sizeof(Environment));
@@ -98,7 +99,7 @@ static LispList *eval_proc(LispList *func, LispList *args, Environment *env)
 		args = args->tail;
 	}
 			
-	LispList *result = eval(func->here.raw.procedure->expression, local_env);
+	result = eval(func->here.raw.procedure->expression, local_env);
 	free_env(local_env);
 	free(local_env);
 	return result;
@@ -108,6 +109,8 @@ static LispList *lambda_form(LispList *expr, Environment *env)
 {
 	LispList *formals;
 	LispList *expression;
+	LispList *result;
+	LispProcedure *proc;
 	/* first argument presence and type: */
 	formals = expr;
 	if (formals == NULL || formals->here.type == END_OF_LIST)
@@ -134,8 +137,8 @@ static LispList *lambda_form(LispList *expr, Environment *env)
 		return NULL;
 	}
 	/* allocate result */	
-	LispList* result    = (LispList *)malloc(sizeof(LispList));
-	LispProcedure* proc = (LispProcedure *)malloc(sizeof(LispProcedure)); 
+	result    = (LispList *)malloc(sizeof(LispList));
+	proc = (LispProcedure *)malloc(sizeof(LispProcedure)); 
 	
 	result->here.type = PROCEDURE;
 	result->tail = NULL;

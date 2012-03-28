@@ -1,4 +1,4 @@
-
+#pragma once
 
 #define ILLEGAL_ARGS_TYPE      1
 #define ILLEGAL_ARGS_COUNT     2

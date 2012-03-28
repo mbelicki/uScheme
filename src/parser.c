@@ -8,10 +8,10 @@
 #define DELIMITERS " \n\t\r"
 #define CHUNK 16
 
-static char **tokenize(char* source);
+static char **tokenize(char *source, int *count);
 static char *handle_parentheses(char *source);
 static size_t count_chars(char *str, char c);
-static LispList *interprete_tokens(char **tokens, unsigned int *index);
+static LispList *interprete_tokens(char **tokens, int *index);
 static int is_an_int(char *str);
 
 
@@ -19,13 +19,14 @@ extern LispList* parse(char* source)
 {
 	char **tokens;
 	char *temp;
-	unsigned int index = 0;
+	int index = 0;
+	int tcount = 0;
 	LispList *parsed;
 
 	temp = handle_parentheses(source);
 	assert(temp != NULL);
 	
-	tokens = tokenize(temp);
+	tokens = tokenize(temp, &tcount);
 	assert(temp != NULL);
 	
 	parsed = interprete_tokens(tokens, &index);
@@ -36,7 +37,7 @@ extern LispList* parse(char* source)
 	return parsed;
 }
 
-static LispList *interprete_tokens(char **tokens, unsigned int *index)
+static LispList *interprete_tokens(char **tokens, int *index)
 {
 	LispList *root;
 	LispList *top;
@@ -166,7 +167,7 @@ static char *handle_parentheses(char *source)
 	return newstr;	
 }
 
-static char **tokenize(char* source)
+static char **tokenize(char* source, int *count)
 {	
 	char *token;
 	char **tokens;
@@ -176,7 +177,9 @@ static char **tokenize(char* source)
 	/* TODO: alloc handling */
 	tokens = (char **)malloc(tokcount * sizeof(char *));
 	token = strtok(source, DELIMITERS);
-	
+	if (token == NULL)
+		return;
+
 	do 
 	{
 		tokens[i++] = token;
@@ -199,8 +202,9 @@ static char **tokenize(char* source)
 		token = strtok(NULL, DELIMITERS);
 	}
 	while (token != NULL);
-	
 	tokens[i] = NULL;
+	
+	*count = i;
 	return tokens;
 }
 
