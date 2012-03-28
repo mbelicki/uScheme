@@ -23,9 +23,9 @@ Environment;
 
 /* declarations */
 
-extern int init_env(Environment *env, size_t initial_size);
-extern int free_env(Environment *env);
+extern void init_env(Environment *env, size_t initial_size);
+extern void free_env(Environment *env);
 
-extern int set_var(Environment *env, char *name, TypedValue *value);
+extern TypedValue *set_var(Environment *env, char *name, TypedValue *value);
 extern TypedValue *get_var(Environment *env, char *name);
 

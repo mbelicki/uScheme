@@ -9,7 +9,7 @@
 
 /* definitons */
 
-extern int init_env(Environment *env, size_t initial_size)
+extern void init_env(Environment *env, size_t initial_size)
 {
 	env->used_size = 0;
 	env->size      = initial_size > 0 ? initial_size : CHUNK;
@@ -17,19 +17,19 @@ extern int init_env(Environment *env, size_t initial_size)
 	env->parent    = NULL;
 }
 
-extern int free_env(Environment *env)
+extern void free_env(Environment *env)
 {
 	free(env->symbols);
 }
 
-extern int set_var(Environment *env, char *name, TypedValue *value)
+extern TypedValue *set_var(Environment *env, char *name, TypedValue *value)
 {
 	int i;
 	
 	/* if evn not empty search for name : */
 	for (i = 0; i < env->used_size; i++)
 		if (strcmp(name, env->symbols[i].name) == 0)
-			return (int)(env->symbols[i].value = value); /* if I could I would make it even more compact :(  */
+			return env->symbols[i].value = value; /* if I could I would make it even more compact :(  */
 	
 	/* no name found : */
 
@@ -48,7 +48,7 @@ extern int set_var(Environment *env, char *name, TypedValue *value)
 
 	env->used_size++;
 
-	return (int)(value);
+	return value;
 }
 
 extern TypedValue *get_var(Environment *env, char *name)

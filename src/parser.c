@@ -69,7 +69,7 @@ static LispList *interprete_tokens(char **tokens, unsigned int *index)
 			
 			stlen = strlen(tokens[*index]) - 1; /* don't include " in len */
 			string = (char *)malloc(stlen * sizeof(char));
-			tokens[*index][stlen] = NULL;
+			tokens[*index][stlen] = '\0';
 			strcpy(string, tokens[*index] + 1);
 
 			top->here.raw.string = string;
@@ -121,7 +121,7 @@ static int is_an_int(char *str)
 {
 	char *current;
 	if (*str == '-' && is_a_digit(*(str + 1))) str+=2; /* first character might be - */
-	for (current = str; *current != NULL; current++)
+	for (current = str; *current != '\0'; current++)
 		if (!is_a_digit(*current))
 			return 0;
 	
@@ -133,7 +133,7 @@ static size_t count_chars(char *str, char c)
 	size_t count = 0;
 	char *current;
 
-	for (current = str; *current != NULL; current++)
+	for (current = str; *current != '\0'; current++)
 		if (*current == c)
 			count++;
 
@@ -151,7 +151,7 @@ static char *handle_parentheses(char *source)
 
 	newstr = (char *)malloc(newlen * sizeof(char));
 	
-	for (i = 0, j = 0; source[i] != NULL; i++, j++)
+	for (i = 0, j = 0; source[i] != '\0'; i++, j++)
 	{
 		newstr[j] = source[i];
 		if (newstr[j] == '(' || newstr[j] == ')')
@@ -172,8 +172,6 @@ static char **tokenize(char* source)
 	char **tokens;
 	int tokcount = CHUNK;
 	int i = 0;
-	size_t len;
-
 
 	/* TODO: alloc handling */
 	tokens = (char **)malloc(tokcount * sizeof(char *));
@@ -187,7 +185,7 @@ static char **tokenize(char* source)
 		if (token[0] == '"') /* if token begins with " it must be a string */
 		{ 
 			for (token++; *token != '"'; token++) /* interate through characters until you find matching " */ 
-				if (*token == NULL) /* on your way changes all \0 characters set by strtok back to spaces */
+				if (*token == '\0') /* on your way changes all \0 characters set by strtok back to spaces */
 					*token = ' ';
 			*(token + 1) = ' ';
 			token = strtok(token, DELIMITERS); /* reset tokenizer state */
@@ -203,7 +201,6 @@ static char **tokenize(char* source)
 	while (token != NULL);
 	
 	tokens[i] = NULL;
-
 	return tokens;
 }
 

@@ -6,6 +6,7 @@
 #include "parser.h"
 #include "eval.h"
 #include "env.h"
+#include "error.h"
 
 int main(int argc, char **argv)
 {
@@ -21,11 +22,16 @@ int main(int argc, char **argv)
 	{
 		prog = parse(code);
 		result = eval(prog, &env);
+	
+		if (!err_try())
+		{
+			printf("===> ");
+			display(result, &env);
+		}
+		err_catch();
 		
-		printf("===> ");
-		display(result, &env);
-		
-		gets(code);
+		if (fgets(code, 512, stdin) == NULL)
+			break;
 	}
 
 	exit(0);

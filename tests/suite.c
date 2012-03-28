@@ -126,7 +126,7 @@ int main(int argc, char **argv)
 	
 	printf("\n--- summary ---\n\n");
 	printf("runned tests: %d\n", all);
-	printf("passed tests: %d (%3.2f%)\n", passed, passed * 100.0f / all);	
+	printf("passed tests: %d ( %3.2f% )\n", passed, passed * 100.0f / all);	
 
 	exit(0);
 }

@@ -32,6 +32,9 @@ static LispList *eval_proc(LispList *procedure, LispList *args, Environment *env
 /* definitions : */
 extern LispList *eval(LispList *root, Environment *env)
 {
+	if (root == NULL)
+		return NULL;
+
 	if (root->here.type == LIST)
 	{
 		LispList *evaled = eval(root->here.raw.list, env);
@@ -64,12 +67,17 @@ extern LispList *eval(LispList *root, Environment *env)
 			return lambda_form(root->tail, env);
 		else
 		{
-			LispList* var = get_var(env, atom);
+			/*TypedValue* */LispList* var = get_var(env, atom);
 			if (var == NULL)
-				return root;
+			{
+				err_throw(UNDEFINED_VARRIABLE,
+				          "Undefined varriable:",
+					  atom);
+				return NULL;
+			}
 			if (var->here.type == PROCEDURE)
 				var = eval_proc(var, root->tail, env);
-			return var;
+			return var; /* TODO: wrong return type! */
 		}
 	}
 	else return root;
@@ -170,7 +178,7 @@ static LispList *set_form(LispList *expr, Environment *env)
 
 	}
 	/* are there any bonus arguments? */
-	if (value->tail != NULL || value->tail->here.type != END_OF_LIST)
+	if (value->tail != NULL && value->tail->here.type != END_OF_LIST)
 	{
 		warn_throw("`set!' form contains additional arguments.", 
 		 	   "Arguments following second argument will be ignored.");
@@ -184,8 +192,8 @@ static LispList *set_form(LispList *expr, Environment *env)
 
 static LispList *begin_form(LispList *expr, Environment *env)
 {
-	LispList *result;
-
+	LispList *result = NULL;
+	/* TODO: begin form must have at least one argument */
 	while (expr != NULL && expr->here.type != END_OF_LIST)
 	{
 		result = eval(expr, env);
@@ -260,7 +268,13 @@ static LispList *if_form(LispList *expr, Environment *env)
 extern LispList *display(LispList *expr, Environment *env)
 {
 	LispList *result;
-
+	if (expr == NULL || expr->here.type == END_OF_LIST)
+	{
+		err_throw(ILLEGAL_ARGS_COUNT, 
+			  "Missing arguments of `display'.", 
+			  "Expected at least one argument.");
+		return NULL;
+	}
 	switch(expr->here.type)
 	{
 		case ATOM:
@@ -279,13 +293,10 @@ extern LispList *display(LispList *expr, Environment *env)
 		case PROCEDURE:   
 			printf("value is a procedure\n");
 			break;
-		case END_OF_LIST: 
-			err_throw(ILLEGAL_ARGS_COUNT, 
-			          "Missing arguments of `display'.", 
-				  "Expected at least one argument.");
-			break;
+		case END_OF_LIST:
+			return NULL;
 	}
-	/* check if there was error in any of evaluation above */
+	/* check if there was error in any of evaluations above */
 	if (err_try())
 		return NULL;
 	/* continue checking if there was no error */
@@ -308,7 +319,7 @@ static LispList *reduce_int(LispList *expr, int base, int (*func)(int, int), Env
 {
 	int acc = base;
 	LispList *result;
-
+	/* check if expr is not null? */
 	while (expr->here.type != END_OF_LIST)
 	{
 		int next = to_int(expr, env);
