@@ -33,12 +33,12 @@ int assert_eval(char *s_expr, RawValue asserted_result)
 	else
 	{
 		printf("\033[01;31m BAD \033[0m | %s\n      ^ returned: %d; expected: %d\n", 
-			s_expr, result->here.raw.integer, asserted_result.integer);
+			   s_expr, result->here.raw.integer, asserted_result.integer);
 		return 0;
 	}
 }
 
-int main(int argc, char **argv)
+int _main(int argc, char **argv)
 {
 	int passed = 0;
 	int all    = 0;

@@ -8,7 +8,7 @@
 
 #define CHUNK 16
 
-/* forward declarations : */
+/* elementary arithmetic operations */
 
 int intadd(int a, int b) {return a + b;}
 int intsub(int a, int b) {return a - b;}
@@ -16,10 +16,15 @@ int intmul(int a, int b) {return a * b;}
 int intdiv(int a, int b) {return a / b;}
 int intmod(int a, int b) {return a % b;}
 
+int inteq(int a, int b)  {return a == b;}
+
+/* forward declarations : */
+
 static int to_int(LispList *expr, Environment *env);
 static int to_bool(LispList *expr, Environment *env);
 
 static LispList *reduce_int(LispList *expr, int base, int (*func)(int, int), Environment *env);
+static LispList *reduceb_int(LispList *expr, int (*func)(int, int), Environment *env);
 
 static LispList *if_form(LispList *expr, Environment *env);
 static LispList *set_form(LispList *expr, Environment *env);
@@ -38,6 +43,8 @@ extern LispList *eval(LispList *root, Environment *env)
 	if (root->here.type == LIST)
 	{
 		LispList *evaled = eval(root->here.raw.list, env);
+		if (err_try())
+			return NULL;
 		evaled->tail = root->tail;
 		root = evaled;
 	}
@@ -46,14 +53,16 @@ extern LispList *eval(LispList *root, Environment *env)
 		char *atom = root->here.raw.atom;
 		if      (strcmp(atom, "+") == 0)
 			return reduce_int(root->tail, 0, intadd, env);
-		else if (strcmp(atom, "-") == 0)
-			return reduce_int(root->tail->tail, root->tail->here.raw.integer, intsub, env);
 		else if (strcmp(atom, "*") == 0)
 			return reduce_int(root->tail, 1, intmul, env);
+		else if (strcmp(atom, "-") == 0)
+			return reduceb_int(root->tail->tail, intsub, env);
 		else if (strcmp(atom, "/") == 0)
 			return reduce_int(root->tail->tail, root->tail->here.raw.integer, intdiv, env);
 		else if (strcmp(atom, "modulo") == 0)
 			return reduce_int(root->tail->tail, root->tail->here.raw.integer, intmod, env);
+		else if (strcmp(atom, "=") == 0)
+			return reduce_int(root->tail->tail, root->tail->here.raw.integer, inteq, env);
 		
 		else if (strcmp(atom, "if") == 0)
 			return if_form(root->tail, env);
@@ -137,7 +146,7 @@ static LispList *lambda_form(LispList *expr, Environment *env)
 		return NULL;
 	}
 	/* allocate result */	
-	result    = (LispList *)malloc(sizeof(LispList));
+	result =    (LispList *)malloc(sizeof(LispList));
 	proc = (LispProcedure *)malloc(sizeof(LispProcedure)); 
 	
 	result->here.type = PROCEDURE;
@@ -311,6 +320,30 @@ extern LispList *display(LispList *expr, Environment *env)
 	/* return 1 if display succeeded */
 	result = (LispList *)malloc(sizeof(LispList));
 	result->here.raw.integer = 1;
+	result->here.type = INTEGER;
+	result->tail = (LispList *)malloc(sizeof(LispList));
+	result->tail->here.type = END_OF_LIST;
+
+	return result;
+}
+
+static LispList *reduceb_int(LispList *expr, int (*func)(int, int), Environment *env)
+{	
+	int acc = to_int(expr, env);
+	LispList *result;
+	/* check if expr is not null? */
+	expr = expr->tail;
+	while (expr->here.type != END_OF_LIST)
+	{
+		int next = to_int(expr, env);
+		/* exit if there was an error during conversion */
+		if (err_try())
+			return NULL;
+		acc = func(acc, next);
+		expr = expr->tail;
+	}
+	result = (LispList *)malloc(sizeof(LispList));
+	result->here.raw.integer = acc;
 	result->here.type = INTEGER;
 	result->tail = (LispList *)malloc(sizeof(LispList));
 	result->tail->here.type = END_OF_LIST;

@@ -11,7 +11,7 @@
 static char **tokenize(char *source, int *count);
 static char *handle_parentheses(char *source);
 static size_t count_chars(char *str, char c);
-static LispList *interprete_tokens(char **tokens, int *index);
+static LispList *interprete_tokens(char **tokens, int tcount, int *index);
 static int is_an_int(char *str);
 
 
@@ -29,7 +29,7 @@ extern LispList* parse(char* source)
 	tokens = tokenize(temp, &tcount);
 	assert(temp != NULL);
 	
-	parsed = interprete_tokens(tokens, &index);
+	parsed = interprete_tokens(tokens, tcount, &index);
 
 	free(tokens);
 	//free(temp); omg :/
@@ -37,7 +37,7 @@ extern LispList* parse(char* source)
 	return parsed;
 }
 
-static LispList *interprete_tokens(char **tokens, int *index)
+static LispList *interprete_tokens(char **tokens, int tcount, int *index)
 {
 	LispList *root;
 	LispList *top;
@@ -45,14 +45,14 @@ static LispList *interprete_tokens(char **tokens, int *index)
 	root = (LispList *)malloc(sizeof(LispList));
 	top = root;
 
-	while (tokens[*index] != NULL && tokens[*index][0] != ')')
+	while (/* *index < tcount && */ tokens[*index] != NULL && tokens[*index][0] != ')')
 	{
 		if (tokens[*index][0] == '(') /* list */
 		{
 			LispList *expr;
 			(*index)++;
 
-			expr = interprete_tokens(tokens, index);
+			expr = interprete_tokens(tokens, tcount - *index, index);
 			
 			top->here.raw.list = expr;
 			top->here.type = LIST;
