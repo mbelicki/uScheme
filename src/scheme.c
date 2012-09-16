@@ -17,7 +17,7 @@ int main(int argc, char **argv)
 	//	execute_file(argv[1]);
 	//else
 	//	interactive();
-	execute_file("samples\\add.scm");
+	execute_file("samples\\fact.scm");
 }
 
 static void interactive()

@@ -56,13 +56,13 @@ extern LispList *eval(LispList *root, Environment *env)
 		else if (strcmp(atom, "*") == 0)
 			return reduce_int(root->tail, 1, intmul, env);
 		else if (strcmp(atom, "-") == 0)
-			return reduceb_int(root->tail->tail, intsub, env);
+			return reduceb_int(root->tail->tail, root->tail, intsub, env);
 		else if (strcmp(atom, "/") == 0)
-			return reduce_int(root->tail->tail, root->tail->here.raw.integer, intdiv, env);
+			return reduceb_int(root->tail->tail, root->tail, intdiv, env);
 		else if (strcmp(atom, "modulo") == 0)
-			return reduce_int(root->tail->tail, root->tail->here.raw.integer, intmod, env);
+			return reduceb_int(root->tail->tail, root->tail, intmod, env);
 		else if (strcmp(atom, "=") == 0)
-			return reduce_int(root->tail->tail, root->tail->here.raw.integer, inteq, env);
+			return reduceb_int(root->tail->tail, root->tail, inteq, env);
 		
 		else if (strcmp(atom, "if") == 0)
 			return if_form(root->tail, env);
@@ -103,12 +103,21 @@ static LispList *eval_proc(LispList *func, LispList *args, Environment *env)
 
 	while (formals->here.type != END_OF_LIST)
 	{
-		set_var(local_env, formals->here.raw.atom, args);
+		TypedValue * arg_val = eval(args, env);
+		if (err_try())
+			return NULL;
+		set_var(local_env, formals->here.raw.atom, arg_val);
 		formals = formals->tail;
 		args = args->tail;
 	}
 			
 	result = eval(func->here.raw.procedure->expression, local_env);
+	while (result->here.type == LIST)
+	{
+		result = eval(result, local_env);
+		if (err_try())
+			return NULL;
+	}
 	free_env(local_env);
 	free(local_env);
 	return result;
@@ -327,12 +336,13 @@ extern LispList *display(LispList *expr, Environment *env)
 	return result;
 }
 
-static LispList *reduceb_int(LispList *expr, int (*func)(int, int), Environment *env)
+static LispList *reduceb_int(LispList *expr, LispList *base, int (*func)(int, int), Environment *env)
 {	
-	int acc = to_int(expr, env);
 	LispList *result;
+	int acc = to_int(base, env);
 	/* check if expr is not null? */
-	expr = expr->tail;
+	if (err_try())
+		return NULL;
 	while (expr->here.type != END_OF_LIST)
 	{
 		int next = to_int(expr, env);
