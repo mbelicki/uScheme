@@ -13,11 +13,10 @@ static void execute_file();
 
 int main(int argc, char **argv)
 {
-	//if (argc > 1)
-	//	execute_file(argv[1]);
-	//else
-	//	interactive();
-	execute_file("samples\\fact.scm");
+	if (argc > 1)
+		execute_file(argv[1]);
+	else
+		interactive();
 }
 
 static void interactive()

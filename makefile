@@ -1,3 +1,5 @@
+.PHONY: clean
+
 INCLUDE=-I./inc
 
 R_FLAGS=-O3 -Wall -pedantic -std=c99
